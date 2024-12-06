@@ -1,4 +1,5 @@
 .env
+mongo/
 
 node_modules/
 
