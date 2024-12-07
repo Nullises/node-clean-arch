@@ -1,6 +1,13 @@
 import { Request, Response } from "express";
-import { CreateUserDto, CustomError } from "../../domain";
+import {
+  CreateUserDto,
+  CreateUserUseCaseImpl,
+  CustomError,
+  LoginUserDto,
+  LoginUserUseCaseImpl,
+} from "../../domain";
 import { AuthRepository } from "../../domain";
+import { UserModel } from "../../data/mongodb/models/user.model";
 export class AuthController {
   constructor(private readonly authRepository: AuthRepository) {}
 
@@ -18,18 +25,29 @@ export class AuthController {
 
     if (error) return res.status(400).json({ error });
 
-    try {
-      const userCreated = await this.authRepository.create(createUserDto!);
-
-      if (userCreated) {
-        return res.json(userCreated);
-      }
-    } catch (error) {
-      this.handleError(error, res);
-    }
+    new CreateUserUseCaseImpl(this.authRepository)
+      .execute(createUserDto!)
+      .then((data) => res.json(data))
+      .catch((error) => this.handleError(error, res));
   };
 
-  loginUser = async (req: Request, res: Response) => {
-    res.json("Login Controller");
+  loginUser = (req: Request, res: Response) => {
+    const [error, loginUserDto] = LoginUserDto.login(req.body);
+    if (error) return res.status(400).json({ error });
+
+    new LoginUserUseCaseImpl(this.authRepository)
+      .execute(loginUserDto!)
+      .then((data) => res.json(data))
+      .catch((error) => this.handleError(error, res));
+  };
+
+  getUsers = (req: Request, res: Response) => {
+    UserModel.find()
+      .then((users) => {
+        res.json({
+          user: req.body.user,
+        });
+      })
+      .catch(() => res.status(500).json({ error: "Internal server error" }));
   };
 }

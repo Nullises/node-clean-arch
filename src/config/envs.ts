@@ -6,6 +6,7 @@ interface EnvVars {
   PORT: number;
   MONGO_URL: string;
   MONGO_DB_NAME: string;
+  JWT_SEED: string;
 }
 
 const envsSchema = joi
@@ -13,6 +14,7 @@ const envsSchema = joi
     PORT: joi.number().required(),
     MONGO_URL: joi.string().required(),
     MONGO_DB_NAME: joi.string().required(),
+    JWT_SEED: joi.string().required(),
   })
   .unknown(true);
 
@@ -30,4 +32,5 @@ export const envs = {
   port: envVars.PORT,
   mongoUrl: envVars.MONGO_URL,
   mongoDbName: envVars.MONGO_DB_NAME,
+  jwtSeed: envVars.JWT_SEED,
 };

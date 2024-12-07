@@ -1,6 +1,6 @@
 import { BcryptAdapter } from "../../config";
 import { UserModel } from "../../data";
-import { CreateUserDto, UserEntity } from "../../domain";
+import { CreateUserDto, LoginUserDto, UserEntity } from "../../domain";
 import { AuthDataSource } from "../../domain/datasources";
 import { CustomError } from "../../domain/errors/custom.error";
 import { UserMapper } from "../mappers";
@@ -13,6 +13,24 @@ export class AuthDatasourceImpl implements AuthDataSource {
     private readonly hashPassword: HashFunction = BcryptAdapter.hash,
     private readonly comparePassword: CompareFunction = BcryptAdapter.compare
   ) {}
+  async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+    const { email, password } = loginUserDto;
+
+    try {
+      // 1. Verificar si el correo no existe
+      const user = await UserModel.findOne({ email });
+      if (!user) throw CustomError.badRequest("User doesn't exist");
+
+      // 2. Verificar si la contraseña no coincide
+      const isMatching = this.comparePassword(password, user.password);
+      if (!isMatching) throw CustomError.badRequest("Password is not valid");
+
+      return UserMapper.userEntityFromObject(user);
+    } catch (error) {
+      console.log(error);
+      throw CustomError.internalServer();
+    }
+  }
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     const { name, email, password } = createUserDto;
